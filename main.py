@@ -1,4 +1,3 @@
-from json import load
 import pygame as pg
 import random
 import os
@@ -13,24 +12,25 @@ load_asset = lambda filename: os.path.join(assets_dir, filename)
 running = True
 game_over = False
 score = 0
-win_condition = 5
+win_condition = 15
 hearts = 3
 
 icono = pg.image.load(load_asset("etec.jpg"))
 pg.display.set_icon(icono)
 
 pg.mixer.music.load(load_asset("ecoaventuras.ogg"))
-pg.mixer.music.set_volume(1)
+pg.mixer.music.set_volume(100)
 pg.mixer.music.play()
 
 yiji = pg.mixer.Sound(load_asset('yiji.ogg'))
 
-width, height = 1280, 720
-screen = pg.display.set_mode((width, height))
+width, height = 1366, 720
+screen = pg.display.set_mode((width, height), pg.RESIZABLE)
 pg.display.set_caption("Juego de los Plasticos")
 
 black = (0, 0, 0)
 
+i = 0
 x = 0
 y = 0
 ancho = 300
@@ -53,7 +53,10 @@ trash_images = [pg.image.load(load_asset(f"botella{i}.png")) for i in range(6)]
 fruit_images = [pg.image.load(load_asset(f"fruta{i}.png")) for i in range(3)]
 trash_size = (40, 80)
 trash_images = [pg.transform.scale(img, trash_size) for img in trash_images]
-trash_speed = 4
+trash_speed = 5
+
+last_position = random.randint(0, width - trash_size[0] - 40)
+new_position = 0
 
 class Trash:
     def __init__(self, x):
@@ -116,8 +119,14 @@ while running:
 
         tacho_x = max(0, min(tacho_x, width - tacho_size[0]))
 
-        if random.randint(0, 200) < 2:
-            trash_objects.append(Trash(random.randint(0, width - 30)))
+        i += 1
+        new_position = random.randint(0, width - trash_size[0] - 40)
+        position_distance = abs(last_position - new_position)
+        # print(f"{last_position} - {new_position} = {position_distance}")
+        if position_distance > 300 and i > 70:
+            last_position = new_position
+            i = 0
+            trash_objects.append(Trash(last_position))
 
         for trash_obj in trash_objects:
             trash_obj.update()
@@ -143,8 +152,8 @@ while running:
         screen.fill((0, 0, 0))
 
         font = pg.font.Font(None, 36)
-        restart_text = font.render("Restart", True, (255, 255, 255))
-        exit_text = font.render("Exit", True, (255, 255, 255))
+        restart_text = font.render("  Reiniciar  ", True, (255, 255, 255))
+        exit_text = font.render("  Salir  ", True, (255, 255, 255))
 
         restart_rect = restart_text.get_rect(center = (width // 2, height // 2 - 50))
         exit_rect = exit_text.get_rect(center = (width // 2, height // 2 + 50))
@@ -165,6 +174,7 @@ while running:
         mouse_click = pg.mouse.get_pressed()
 
         if restart_rect.collidepoint(mouse_pos) and mouse_click[0]:
+            trash_objects = []
             game_over = False
             score = 0
             hearts = 3
